@@ -56,7 +56,7 @@ nav {
 .spin { width: 28px; height: 28px; border: 2px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: spin 0.7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--text); color: #fff; padding: 10px 18px; border-radius: 20px; font-size: 13px; font-weight: 500; transition: transform 0.3s cubic-bezier(.4,0,.2,1); z-index: 9999; white-space: nowrap; }
+.toast { position: fixed; bottom: 88px; left: 50%; transform: translateX(-50%) translateY(120px); background: var(--text); color: #fff; padding: 10px 18px; border-radius: 20px; font-size: 13px; font-weight: 500; transition: transform 0.3s cubic-bezier(.4,0,.2,1); z-index: 9999; white-space: nowrap; pointer-events: none; }
 .toast.show { transform: translateX(-50%) translateY(0); }
 .toast.err { background: var(--red); }
 
@@ -306,10 +306,10 @@ input[type=range]::-webkit-slider-thumb { appearance: none; width: 18px; height:
   <span class="top-brand">◎ rishabh · life</span>
   <div style="display:flex;align-items:center;gap:8px">
     <span style="font-size:11px;color:var(--muted);font-family:var(--mono)" id="streak-badge"></span>
-    <button onclick="showSBSetup()" id="sync-btn" style="display:flex;align-items:center;gap:5px;background:none;border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:11px;color:var(--muted);cursor:pointer;font-family:var(--sans);white-space:nowrap;">
-      <span id="sync-dot" style="width:6px;height:6px;border-radius:50%;background:var(--muted2);display:inline-block;flex-shrink:0"></span>
-      <span id="sync-label">Connect DB</span>
-    </button>
+    <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)">
+      <span id="sync-dot" style="width:6px;height:6px;border-radius:50%;background:var(--muted2);display:inline-block"></span>
+      <span id="sync-label">Connecting…</span>
+    </span>
   </div>
 </div>
 
@@ -576,7 +576,10 @@ let goals   = load(STORE_GOALS) || JSON.parse(JSON.stringify(DEFAULT_GOALS));
 let logType = 'sleep', histFilter = 'all', sumPeriod = 'week', sumWeek = null, sumMonth = null;
 let noteFilter = 'all', selectedTags = [];
 
-// ── SUPABASE ───────────────────────────────────────────────────────────────
+// ── SUPABASE (hardcoded — auto connects on load) ───────────────────────────
+const SB_URL = 'https://cmpmtxlhmkefbvdiibvt.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNtcG10eGxobWtlZmJ2ZGlpYnZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNzA2NjcsImV4cCI6MjA5NDY0NjY2N30.2EfeLYOZGmwybaKeJZc6eqAhdNcNQR2cQ1ckvMKpQU0';
+
 let _sb = null;
 
 function setSyncUI(state) {
@@ -584,52 +587,13 @@ function setSyncUI(state) {
   const lbl = document.getElementById('sync-label');
   if (!dot) return;
   const map = {
-    off:    { c:'var(--muted2)', t:'Connect DB' },
-    syncing:{ c:'#EAB308',      t:'Syncing…'   },
-    ok:     { c:'#16A34A',      t:'Synced ✓'   },
-    err:    { c:'var(--red)',    t:'Sync error' },
+    syncing: { c:'#EAB308', t:'Syncing…'  },
+    ok:      { c:'#16A34A', t:'Synced ✓'  },
+    err:     { c:'#C0392B', t:'Sync error'},
   };
-  const s = map[state] || map.off;
+  const s = map[state] || { c:'var(--muted2)', t:'Offline' };
   dot.style.background = s.c;
   lbl.textContent = s.t;
-}
-
-function showSBSetup() {
-  const cfg = load(STORE_SB) || {};
-  const el = document.getElementById('sb-overlay');
-  el.style.display = 'flex';
-  if (cfg.url) document.getElementById('sb-url').value = cfg.url;
-  if (cfg.key) document.getElementById('sb-key').value = cfg.key;
-}
-function dismissSB() {
-  document.getElementById('sb-overlay').style.display = 'none';
-}
-function copySQL() {
-  const sql = `CREATE TABLE IF NOT EXISTS life_logs (\n  id TEXT PRIMARY KEY,\n  type TEXT NOT NULL,\n  date TEXT NOT NULL,\n  ts BIGINT,\n  data JSONB,\n  created_at TIMESTAMPTZ DEFAULT NOW()\n);`;
-  navigator.clipboard.writeText(sql).then(() => toast('SQL copied!')).catch(() => toast('Copy failed', true));
-}
-
-async function connectSB() {
-  const url = document.getElementById('sb-url').value.trim().replace(/\/$/, '');
-  const key = document.getElementById('sb-key').value.trim();
-  if (!url || !key)   { toast('Enter both URL and key', true); return; }
-  if (!url.startsWith('https://')) { toast('URL must start with https://', true); return; }
-
-  try {
-    _sb = supabase.createClient(url, key);
-    setSyncUI('syncing');
-    // test connection
-    const { error } = await _sb.from('life_logs').select('id').limit(1);
-    if (error) throw error;
-    localStorage.setItem(STORE_SB, JSON.stringify({ url, key }));
-    dismissSB();
-    toast('Connected! Syncing…');
-    await fullSync();
-  } catch(e) {
-    _sb = null;
-    setSyncUI('err');
-    toast('Connection failed: ' + (e.message || 'check URL & key'), true);
-  }
 }
 
 async function sbPush(entry) {
@@ -637,12 +601,14 @@ async function sbPush(entry) {
   const { id, type, date, ts, ...rest } = entry;
   const { error } = await _sb.from('life_logs').upsert({ id, type, date, ts, data: rest });
   if (error) { setSyncUI('err'); console.error(error); }
+  else setSyncUI('ok');
 }
 
 async function sbRemove(id) {
   if (!_sb) return;
   const { error } = await _sb.from('life_logs').delete().eq('id', id);
   if (error) { setSyncUI('err'); console.error(error); }
+  else setSyncUI('ok');
 }
 
 async function fullSync() {
@@ -653,10 +619,8 @@ async function fullSync() {
     if (error) throw error;
     const remote = data.map(r => ({ id: r.id, type: r.type, date: r.date, ts: r.ts, ...(r.data||{}) }));
     const remoteIds = new Set(remote.map(r => r.id));
-    // push any local entries not yet on server
     const localOnly = logs.filter(l => !remoteIds.has(l.id));
     for (const e of localOnly) await sbPush(e);
-    // merge
     const merged = [...remote, ...localOnly].sort((a,b) => (b.ts||0) - (a.ts||0));
     logs = merged;
     saveLocal();
@@ -664,64 +628,18 @@ async function fullSync() {
     setSyncUI('ok');
   } catch(e) {
     setSyncUI('err');
-    toast('Sync failed: ' + (e.message || ''), true);
   }
 }
 
-// Override save to also push to Supabase
-function save() {
-  saveLocal();
-  // goals don't go to supabase (personal config, stays local)
-}
-
 async function initSB() {
-  const cfg = load(STORE_SB);
-  if (!cfg?.url || !cfg?.key) return;
   try {
-    _sb = supabase.createClient(cfg.url, cfg.key);
+    _sb = supabase.createClient(SB_URL, SB_KEY);
     await fullSync();
   } catch(e) {
     _sb = null;
     setSyncUI('err');
   }
 }
-
-// ── SUPABASE SETUP OVERLAY HTML (inject into page) ────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  const div = document.createElement('div');
-  div.innerHTML = `
-  <div class="overlay" id="sb-overlay" style="display:none;align-items:center;justify-content:center;padding:20px;z-index:300">
-    <div style="background:var(--bg);border-radius:20px;padding:24px 20px;width:100%;max-width:420px">
-      <div style="font-size:26px;margin-bottom:6px">🗄️</div>
-      <div style="font-size:17px;font-weight:600;margin-bottom:4px">Connect Supabase</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.5">
-        Syncs your data across all devices.<br>
-        Get from <b>supabase.com → Settings → API Keys → Legacy anon tab</b>.
-      </div>
-      <div class="field"><label>Project URL</label>
-        <input type="url" id="sb-url" placeholder="https://xxxx.supabase.co" autocomplete="off">
-      </div>
-      <div class="field" style="margin-bottom:12px"><label>Anon Key</label>
-        <input type="text" id="sb-key" placeholder="eyJhbGciOiJIUzI1NiIs…" style="font-size:11px" autocomplete="off">
-      </div>
-      <div style="background:var(--blue-bg);border:1px solid var(--blue);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--blue);margin-bottom:14px">
-        <b>Run once in Supabase → SQL Editor:</b>
-        <pre style="font-size:10px;font-family:monospace;margin-top:6px;white-space:pre-wrap;line-height:1.5;user-select:all">CREATE TABLE IF NOT EXISTS life_logs (
-  id TEXT PRIMARY KEY,
-  type TEXT NOT NULL,
-  date TEXT NOT NULL,
-  ts BIGINT,
-  data JSONB,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);</pre>
-        <button onclick="copySQL()" style="margin-top:4px;background:var(--blue);color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer">📋 Copy SQL</button>
-      </div>
-      <button class="btn blue" onclick="connectSB()">Connect & Sync</button>
-      <button onclick="dismissSB()" style="width:100%;margin-top:8px;padding:10px;background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer">Skip — local only</button>
-    </div>
-  </div>`;
-  document.body.appendChild(div.firstElementChild);
-});
 
 // ── UTILS ──────────────────────────────────────────────────────────────────
 function today() { return new Date().toISOString().split('T')[0]; }
