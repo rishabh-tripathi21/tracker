@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rishabh · Life v2</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #F7F6F3; --surface: #FFFFFF; --border: #E8E6E0;
+  --text: #1A1A18; --muted: #9A9890; --muted2: #C8C6C0;
+  --green: #1D7A52; --green-bg: #EDF7F2; --green-light: #D1FAE5;
+  --red: #C0392B; --red-bg: #FDF2F1;
+  --blue: #2563EB; --blue-bg: #EFF4FF;
+  --purple: #7C3AED; --purple-bg: #F5F0FF;
+  --orange: #C2570A; --orange-bg: #FEF3E8;
+  --teal: #0D9488; --teal-bg: #F0FDFA;
+  --radius: 12px;
+  --mono: 'DM Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+}
+body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
+
+nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(247,246,243,0.97); backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: stretch; height: 64px;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.nav-tabs { display: flex; flex: 1; }
+.nav-tab {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; font-size: 10px; font-weight: 500; color: var(--muted);
+  background: none; border: none; cursor: pointer; transition: color 0.15s;
+  padding: 8px 2px; line-height: 1;
+}
+.nav-tab .ti { font-size: 18px; line-height: 1; }
+.nav-tab.active { color: var(--text); }
+.nav-tab.active .ti { transform: scale(1.1); }
+
+.page { display: none; padding: 16px 16px 84px; max-width: 480px; margin: 0 auto; }
+.page.active { display: block; }
+
+.top-bar {
+  position: sticky; top: 0; z-index: 90;
+  background: rgba(247,246,243,0.97); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px; display: flex; align-items: center; justify-content: space-between; height: 48px;
+}
+.top-brand { font-family: var(--mono); font-size: 14px; font-weight: 500; }
+
+.loader { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; z-index: 999; transition: opacity 0.3s; }
+.loader.hidden { opacity: 0; pointer-events: none; }
+.spin { width: 28px; height: 28px; border: 2px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--text); color: #fff; padding: 10px 18px; border-radius: 20px; font-size: 13px; font-weight: 500; transition: transform 0.3s cubic-bezier(.4,0,.2,1); z-index: 9999; white-space: nowrap; }
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.err { background: var(--red); }
+
+.sl { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin-bottom: 10px; }
+.divider { height: 1px; background: var(--border); margin: 16px 0; }
+.empty { font-size: 13px; color: var(--muted); padding: 20px 0; text-align: center; }
+
+/* FIELDS */
+.field { margin-bottom: 8px; }
+.fg2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fg3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.field label { display: block; font-size: 11px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+.field input, .field select, .field textarea {
+  width: 100%; padding: 10px 12px; font-family: var(--sans); font-size: 14px;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--surface);
+  color: var(--text); outline: none; transition: border-color 0.15s;
+  appearance: none; -webkit-appearance: none;
+}
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--text); }
+.field input::placeholder, .field textarea::placeholder { color: var(--muted); }
+.field textarea { resize: none; height: 72px; }
+.field input.big { font-family: var(--mono); font-size: 22px; padding: 12px; }
+.field input.tbig { font-family: var(--mono); font-size: 20px; text-align: center; }
+
+.btn { width: 100%; padding: 12px; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; margin-top: 6px; transition: opacity 0.15s; font-family: var(--sans); background: var(--text); }
+.btn:active { opacity: 0.8; }
+.btn.purple { background: var(--purple); }
+.btn.blue   { background: var(--blue); }
+.btn.orange { background: var(--orange); }
+.btn.green  { background: var(--green); }
+.btn.teal   { background: var(--teal); }
+.btn.sm { padding: 8px 12px; font-size: 13px; width: auto; }
+
+.type-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.type-btn { padding: 7px 14px; font-size: 13px; font-weight: 500; border: 1px solid var(--border); border-radius: 20px; background: var(--surface); color: var(--muted); cursor: pointer; transition: all 0.15s; font-family: var(--sans); }
+.type-btn.sleep.active  { background: var(--purple-bg); color: var(--purple); border-color: var(--purple); }
+.type-btn.skill.active  { background: var(--blue-bg);   color: var(--blue);   border-color: var(--blue); }
+.type-btn.screen.active { background: var(--orange-bg); color: var(--orange); border-color: var(--orange); }
+.type-btn.note.active   { background: var(--green-bg);  color: var(--green);  border-color: var(--green); }
+
+/* HOME HERO */
+.hero { background: var(--text); color: #fff; border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+.hero-date { font-size: 11px; opacity: 0.5; margin-bottom: 2px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+.hero-greet { font-size: 19px; font-weight: 500; margin-bottom: 14px; }
+.goal-row { display: flex; flex-direction: column; gap: 10px; }
+.goal-item {}
+.goal-hdr { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+.goal-name { font-size: 12px; font-weight: 500; opacity: 0.85; }
+.goal-nums { font-family: var(--mono); font-size: 11px; opacity: 0.65; }
+.goal-track { height: 6px; background: rgba(255,255,255,0.15); border-radius: 3px; overflow: hidden; }
+.goal-fill { height: 100%; border-radius: 3px; transition: width 0.5s cubic-bezier(.4,0,.2,1); }
+.goal-fill.ok   { background: #4ADE80; }
+.goal-fill.warn { background: #FCD34D; }
+.goal-fill.bad  { background: #F87171; }
+
+/* DAILY SCORE */
+.score-ring-wrap { display: flex; align-items: center; gap: 16px; padding: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; }
+.score-ring { position: relative; width: 72px; height: 72px; flex-shrink: 0; }
+.score-ring svg { transform: rotate(-90deg); }
+.score-ring-num { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.score-ring-val { font-family: var(--mono); font-size: 20px; font-weight: 500; line-height: 1; }
+.score-ring-lbl { font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); margin-top: 1px; }
+.score-breakdown { flex: 1; }
+.score-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.score-row:last-child { margin-bottom: 0; }
+.score-key { font-size: 11px; color: var(--muted); width: 58px; flex-shrink: 0; }
+.score-bar { flex: 1; height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+.score-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+.score-pts { font-family: var(--mono); font-size: 11px; color: var(--muted); width: 28px; text-align: right; }
+
+/* STREAK */
+.streak-strip { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 12px; }
+.streak-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; text-align: center; }
+.streak-icon { font-size: 20px; margin-bottom: 3px; }
+.streak-val { font-family: var(--mono); font-size: 20px; font-weight: 500; }
+.streak-lbl { font-size: 10px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 1px; }
+
+/* QUICK GRID */
+.quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.qbtn { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; cursor: pointer; text-align: left; transition: border-color 0.15s; font-family: var(--sans); }
+.qbtn:hover { border-color: var(--text); }
+.qbtn-icon { font-size: 18px; margin-bottom: 4px; }
+.qbtn-lbl { font-size: 12px; font-weight: 500; color: var(--text); display: block; }
+.qbtn-sub { font-size: 11px; color: var(--muted); }
+
+/* MODAL */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; display: none; align-items: flex-end; justify-content: center; }
+.overlay.open { display: flex; }
+.sheet { background: var(--bg); border-radius: 20px 20px 0 0; padding: 20px 16px 36px; width: 100%; max-width: 480px; animation: up 0.25s cubic-bezier(.4,0,.2,1); max-height: 90vh; overflow-y: auto; }
+@keyframes up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.sheet-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 16px; }
+.sheet-title { font-size: 15px; font-weight: 500; margin-bottom: 14px; }
+.sheet-x { position: absolute; right: 16px; top: 0; background: none; border: none; font-size: 22px; color: var(--muted); cursor: pointer; line-height: 1; padding: 4px; }
+
+/* STATS */
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+.stat-card.full { grid-column: 1/-1; }
+.stat-lbl { font-size: 10px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+.stat-val { font-family: var(--mono); font-size: 18px; font-weight: 500; }
+.stat-val.blue   { color: var(--blue); }
+.stat-val.purple { color: var(--purple); }
+.stat-val.orange { color: var(--orange); }
+.stat-val.green  { color: var(--green); }
+.stat-val.teal   { color: var(--teal); }
+
+/* FILTER / TABS */
+.chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 12px; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chip { padding: 5px 12px; font-size: 12px; font-weight: 500; border: 1px solid var(--border); border-radius: 20px; background: var(--surface); color: var(--muted); cursor: pointer; white-space: nowrap; transition: all 0.15s; font-family: var(--sans); }
+.chip.active { background: var(--text); color: #fff; border-color: var(--text); }
+
+.period-row { display: flex; gap: 6px; margin-bottom: 14px; }
+.pbtn { flex: 1; padding: 8px; font-size: 13px; font-weight: 500; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--muted); cursor: pointer; font-family: var(--sans); transition: all 0.15s; }
+.pbtn.active { background: var(--text); color: #fff; border-color: var(--text); }
+
+/* CHART */
+.chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+.chart-title { font-size: 12px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; }
+.bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+.bar-key { font-size: 11px; color: var(--muted); width: 64px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-track { flex: 1; background: var(--bg); border-radius: 4px; height: 14px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s cubic-bezier(.4,0,.2,1); }
+.bar-val { font-family: var(--mono); font-size: 11px; color: var(--muted); width: 52px; text-align: right; flex-shrink: 0; }
+
+/* CORRELATION */
+.corr-row { display: flex; align-items: center; gap: 4px; height: 26px; margin-bottom: 3px; }
+.corr-day { font-size: 10px; color: var(--muted); width: 28px; flex-shrink: 0; }
+.corr-seg { height: 14px; border-radius: 3px; transition: width 0.4s; min-width: 0; }
+.corr-legend { display: flex; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
+.corr-leg { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+.corr-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+/* LOG LIST */
+.log-gl { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); padding: 16px 0 6px; }
+.log-item { display: flex; align-items: flex-start; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+.log-item:last-child { border-bottom: none; }
+.log-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+.log-dot.sleep  { background: var(--purple); }
+.log-dot.skill  { background: var(--blue); }
+.log-dot.screen { background: var(--orange); }
+.log-dot.note   { background: var(--green); }
+.log-body { flex: 1; min-width: 0; }
+.log-desc { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.log-meta { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.log-right { text-align: right; flex-shrink: 0; }
+.log-val { font-family: var(--mono); font-size: 13px; font-weight: 500; }
+.log-val.blue   { color: var(--blue); }
+.log-val.purple { color: var(--purple); }
+.log-val.orange { color: var(--orange); }
+.log-val.green  { color: var(--green); }
+.log-del { background: none; border: none; color: var(--border); font-size: 18px; cursor: pointer; padding: 4px; flex-shrink: 0; transition: color 0.15s; line-height: 1; }
+.log-del:hover { color: var(--red); }
+
+/* GOALS PAGE */
+.goal-edit-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; }
+.ge-icon { font-size: 20px; flex-shrink: 0; }
+.ge-body { flex: 1; }
+.ge-name { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
+.ge-val { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.ge-btn { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 12px; cursor: pointer; font-family: var(--sans); color: var(--muted); white-space: nowrap; transition: all 0.15s; }
+.ge-btn:hover { border-color: var(--text); color: var(--text); }
+
+.hint { background: var(--purple-bg); border: 1px solid var(--purple); border-radius: 8px; padding: 9px 11px; font-size: 12px; color: var(--purple); margin-bottom: 10px; line-height: 1.5; }
+
+/* HEATMAP */
+.heatmap-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; overflow: hidden; }
+.heatmap-grid { display: flex; gap: 3px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+.heatmap-grid::-webkit-scrollbar { display: none; }
+.heatmap-col { display: flex; flex-direction: column; gap: 3px; flex-shrink: 0; }
+.heatmap-cell { width: 13px; height: 13px; border-radius: 2px; cursor: pointer; transition: transform 0.1s; }
+.heatmap-cell:hover { transform: scale(1.2); }
+.heatmap-cell[data-score="0"] { background: var(--bg); border: 1px solid var(--border); }
+.heatmap-cell[data-score="1"] { background: #BBF7D0; }
+.heatmap-cell[data-score="2"] { background: #86EFAC; }
+.heatmap-cell[data-score="3"] { background: #4ADE80; }
+.heatmap-cell[data-score="4"] { background: #22C55E; }
+.heatmap-cell[data-score="5"] { background: #16A34A; }
+.heatmap-labels { display: flex; gap: 3px; margin-bottom: 4px; }
+.heatmap-month-label { font-size: 9px; color: var(--muted); font-weight: 500; white-space: nowrap; }
+.heatmap-legend { display: flex; align-items: center; gap: 4px; margin-top: 8px; }
+.heatmap-legend-lbl { font-size: 10px; color: var(--muted); }
+.hm-leg { width: 10px; height: 10px; border-radius: 2px; }
+
+/* ENERGY / CONTEXT SLIDERS */
+.slider-field { margin-bottom: 12px; }
+.slider-field label { display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px; }
+.slider-field label span { font-family: var(--mono); font-size: 13px; color: var(--text); }
+input[type=range] { width: 100%; height: 6px; appearance: none; background: var(--bg); border-radius: 3px; outline: none; cursor: pointer; }
+input[type=range]::-webkit-slider-thumb { appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--text); cursor: pointer; border: 2px solid var(--surface); box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+
+/* NOTE ENHANCEMENTS */
+.note-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.note-tag { padding: 4px 10px; font-size: 12px; border: 1px solid var(--border); border-radius: 14px; cursor: pointer; background: var(--surface); color: var(--muted); transition: all 0.15s; }
+.note-tag.active { background: var(--green-bg); color: var(--green); border-color: var(--green); }
+.note-full { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 8px; }
+.note-full-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.note-full-date { font-size: 11px; color: var(--muted); font-weight: 500; }
+.note-full-mood { font-size: 18px; }
+.note-full-text { font-size: 13px; line-height: 1.6; color: var(--text); white-space: pre-wrap; }
+.note-full-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.note-full-tag { padding: 2px 8px; font-size: 11px; background: var(--green-bg); color: var(--green); border-radius: 10px; }
+.note-full-context { display: flex; gap: 12px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+.ctx-item { font-size: 11px; color: var(--muted); }
+.ctx-item span { color: var(--text); font-weight: 500; }
+
+/* SEARCH */
+.search-wrap { position: relative; margin-bottom: 12px; }
+.search-input { width: 100%; padding: 10px 12px 10px 36px; font-family: var(--sans); font-size: 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); outline: none; transition: border-color 0.15s; }
+.search-input:focus { border-color: var(--text); }
+.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 14px; color: var(--muted); pointer-events: none; }
+
+/* AI REFLECTION */
+.ai-card { background: linear-gradient(135deg, #0D9488 0%, #0F766E 100%); color: #fff; border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+.ai-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.ai-card-icon { font-size: 18px; }
+.ai-card-title { font-size: 13px; font-weight: 600; }
+.ai-card-body { font-size: 13px; line-height: 1.6; opacity: 0.92; }
+.ai-card-body.loading { opacity: 0.5; font-style: italic; }
+.ai-refresh { background: rgba(255,255,255,0.2); border: none; border-radius: 6px; padding: 6px 10px; color: #fff; font-size: 12px; cursor: pointer; font-family: var(--sans); margin-top: 10px; transition: background 0.15s; }
+.ai-refresh:hover { background: rgba(255,255,255,0.3); }
+
+/* WEEK REVIEW */
+.review-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 8px; }
+.review-card-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
+.review-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.review-item:last-child { border-bottom: none; }
+.review-item-icon { font-size: 15px; flex-shrink: 0; }
+.review-item-text { font-size: 13px; flex: 1; }
+.review-item-val { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+/* CONSISTENCY % */
+.consist-strip { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.consist-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; text-align: center; }
+.consist-val { font-family: var(--mono); font-size: 18px; font-weight: 500; margin-bottom: 2px; }
+.consist-lbl { font-size: 10px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; }
+
+/* SCORE HISTORY MINI */
+.score-history { display: flex; gap: 4px; align-items: flex-end; height: 40px; margin-top: 8px; }
+.score-bar-mini { flex: 1; border-radius: 3px 3px 0 0; min-height: 4px; transition: height 0.3s; cursor: pointer; }
+.score-bar-mini:hover { opacity: 0.8; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <span class="top-brand">◎ rishabh · life</span>
+  <span style="font-size:11px;color:var(--muted);font-family:var(--mono)" id="streak-badge"></span>
+</div>
+
+<div class="loader" id="loader"><div class="spin"></div></div>
+
+<nav>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="go('home',this)"><span class="ti">🏠</span>Home</button>
+    <button class="nav-tab" onclick="go('log',this)"><span class="ti">✏️</span>Log</button>
+    <button class="nav-tab" onclick="go('notes',this)"><span class="ti">📝</span>Notes</button>
+    <button class="nav-tab" onclick="go('summary',this)"><span class="ti">📊</span>Stats</button>
+    <button class="nav-tab" onclick="go('goals',this)"><span class="ti">🎯</span>Goals</button>
+  </div>
+</nav>
+
+<!-- HOME -->
+<div id="pg-home" class="page active">
+  <div class="hero">
+    <div class="hero-date" id="home-date"></div>
+    <div class="hero-greet" id="home-greet"></div>
+    <div class="goal-row" id="home-goals"></div>
+  </div>
+
+  <!-- DAILY SCORE -->
+  <div class="score-ring-wrap" id="score-ring-wrap">
+    <div class="score-ring">
+      <svg width="72" height="72" viewBox="0 0 72 72">
+        <circle cx="36" cy="36" r="30" fill="none" stroke="#E8E6E0" stroke-width="7"/>
+        <circle cx="36" cy="36" r="30" fill="none" stroke="#1D7A52" stroke-width="7"
+          stroke-linecap="round" stroke-dasharray="188.5" id="score-arc" stroke-dashoffset="188.5"
+          style="transition:stroke-dashoffset 0.8s cubic-bezier(.4,0,.2,1)"/>
+      </svg>
+      <div class="score-ring-num">
+        <div class="score-ring-val" id="score-num">—</div>
+        <div class="score-ring-lbl">Today</div>
+      </div>
+    </div>
+    <div class="score-breakdown" id="score-breakdown"></div>
+  </div>
+
+  <div class="streak-strip">
+    <div class="streak-card"><div class="streak-icon">🔥</div><div class="streak-val" id="st-log">0</div><div class="streak-lbl">Log streak</div></div>
+    <div class="streak-card"><div class="streak-icon">📚</div><div class="streak-val" id="st-study">0</div><div class="streak-lbl">Study streak</div></div>
+    <div class="streak-card"><div class="streak-icon">😴</div><div class="streak-val" id="st-sleep">0</div><div class="streak-lbl">Sleep streak</div></div>
+  </div>
+
+  <div class="sl">Quick add</div>
+  <div class="quick-grid">
+    <button class="qbtn" onclick="openQuick('sleep')"><div class="qbtn-icon">😴</div><span class="qbtn-lbl">Log Sleep</span><span class="qbtn-sub">Bed & wake time</span></button>
+    <button class="qbtn" onclick="openQuick('skill')"><div class="qbtn-icon">📚</div><span class="qbtn-lbl">Log Study</span><span class="qbtn-sub">Subject & duration</span></button>
+    <button class="qbtn" onclick="openQuick('screen')"><div class="qbtn-icon">📱</div><span class="qbtn-lbl">Log Screen</span><span class="qbtn-sub">Platform & hours</span></button>
+    <button class="qbtn" onclick="openQuick('note')"><div class="qbtn-icon">📝</div><span class="qbtn-lbl">Daily Note</span><span class="qbtn-sub">Mood, energy & tags</span></button>
+  </div>
+
+  <div class="divider"></div>
+  <div class="sl">Today's logs</div>
+  <div id="home-today"></div>
+</div>
+
+<!-- LOG -->
+<div id="pg-log" class="page">
+  <div class="sl" style="margin-bottom:10px">What are you logging?</div>
+  <div class="type-row">
+    <button class="type-btn sleep active" id="btn-sleep" onclick="setType('sleep')">😴 Sleep</button>
+    <button class="type-btn skill"        id="btn-skill" onclick="setType('skill')">📚 Study</button>
+    <button class="type-btn screen"       id="btn-screen" onclick="setType('screen')">📱 Screen</button>
+    <button class="type-btn note"         id="btn-note"  onclick="setType('note')">📝 Note</button>
+  </div>
+
+  <div id="form-sleep">
+    <div class="hint">💡 Enter when you went to <b>bed</b> last night, then when you <b>woke up</b>. Hours are calculated automatically.</div>
+    <div class="fg2" style="margin-bottom:8px">
+      <div class="field"><label>🌙 Bed Time</label><input type="time" id="sl-bed" class="tbig"></div>
+      <div class="field"><label>☀️ Wake Up</label><input type="time" id="sl-wake" class="tbig"></div>
+    </div>
+    <div class="field"><label>Date (day you woke up)</label><input type="date" id="sl-date"></div>
+    <div class="field"><input type="text" id="sl-note" placeholder="Note — e.g. slept well, vivid dreams"></div>
+    <button class="btn purple" onclick="addLog('sleep')">+ Log Sleep</button>
+  </div>
+
+  <div id="form-skill" style="display:none">
+    <div class="field"><label>Subject / Skill</label>
+      <select id="sk-name"><option>DSA / Coding</option><option>Spring Boot</option><option>Machine Learning</option><option>CyberTwin</option><option>Maths</option><option>Reading / Books</option><option>Project Work</option><option>Other</option></select>
+    </div>
+    <div class="fg2" style="margin-bottom:8px">
+      <div class="field"><label>Duration (hrs)</label><input type="number" id="sk-hrs" class="big" placeholder="1.5" step="0.25" min="0.25"></div>
+      <div class="field"><label>Date</label><input type="date" id="sk-date"></div>
+    </div>
+    <div class="field"><label>Focus quality</label>
+      <select id="sk-focus"><option value="3">🔥 Deep focus</option><option value="2" selected>💡 Average</option><option value="1">😵 Distracted</option></select>
+    </div>
+    <div class="field"><textarea id="sk-note" placeholder="What did you cover? e.g. DP on trees, LangGraph agents…"></textarea></div>
+    <button class="btn blue" onclick="addLog('skill')">+ Log Study</button>
+  </div>
+
+  <div id="form-screen" style="display:none">
+    <div class="field"><label>Screen Time (hrs)</label><input type="number" id="sc-hrs" class="big" placeholder="2.5" step="0.25" min="0.25"></div>
+    <div class="fg2" style="margin-bottom:8px">
+      <div class="field"><label>Platform</label>
+        <select id="sc-platform"><option>YouTube</option><option>Instagram</option><option>Twitter / X</option><option>Netflix / OTT</option><option>Games</option><option>Misc scrolling</option><option>Productive use</option></select>
+      </div>
+      <div class="field"><label>Date</label><input type="date" id="sc-date"></div>
+    </div>
+    <button class="btn orange" onclick="addLog('screen')">+ Log Screen Time</button>
+  </div>
+
+  <div id="form-note" style="display:none">
+    <div class="field"><label>Date</label><input type="date" id="nt-date"></div>
+    <div class="field"><textarea id="nt-text" placeholder="Wins, struggles, what you learnt today…" style="height:110px"></textarea></div>
+    <div class="fg2">
+      <div class="field"><label>Mood</label>
+        <select id="nt-mood"><option value="5">😄 Great</option><option value="4">🙂 Good</option><option value="3" selected>😐 Okay</option><option value="2">😕 Meh</option><option value="1">😞 Bad</option></select>
+      </div>
+      <div class="field"><label>Energy (1–5)</label>
+        <select id="nt-energy"><option value="5">⚡ High</option><option value="4">💪 Good</option><option value="3" selected>😐 Average</option><option value="2">😩 Low</option><option value="1">💀 Depleted</option></select>
+      </div>
+    </div>
+    <div class="field"><label>Stress (1–5)</label>
+      <select id="nt-stress"><option value="1" selected>🧘 Calm</option><option value="2">😌 Mild</option><option value="3">😬 Moderate</option><option value="4">😰 High</option><option value="5">🔥 Intense</option></select>
+    </div>
+    <div class="field" style="margin-bottom:4px"><label>Tags</label></div>
+    <div class="note-tags" id="note-tag-picker">
+      <span class="note-tag" onclick="toggleTag(this,'win')">🏆 Win</span>
+      <span class="note-tag" onclick="toggleTag(this,'struggle')">😤 Struggle</span>
+      <span class="note-tag" onclick="toggleTag(this,'insight')">💡 Insight</span>
+      <span class="note-tag" onclick="toggleTag(this,'placement')">💼 Placement</span>
+      <span class="note-tag" onclick="toggleTag(this,'health')">🏃 Health</span>
+      <span class="note-tag" onclick="toggleTag(this,'social')">👥 Social</span>
+    </div>
+    <button class="btn green" onclick="addLog('note')">+ Save Note</button>
+  </div>
+</div>
+
+<!-- NOTES -->
+<div id="pg-notes" class="page">
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input class="search-input" id="notes-search" placeholder="Search notes, tags…" oninput="renderNotes()">
+  </div>
+  <div class="chips" style="padding-bottom:12px" id="notes-tag-filter">
+    <button class="chip active" onclick="setNoteFilter('all',this)">All</button>
+    <button class="chip" onclick="setNoteFilter('win',this)">🏆 Win</button>
+    <button class="chip" onclick="setNoteFilter('struggle',this)">😤 Struggle</button>
+    <button class="chip" onclick="setNoteFilter('insight',this)">💡 Insight</button>
+    <button class="chip" onclick="setNoteFilter('placement',this)">💼 Placement</button>
+  </div>
+  <div id="notes-list"></div>
+</div>
+
+<!-- SUMMARY -->
+<div id="pg-summary" class="page">
+  <div class="period-row">
+    <button class="pbtn active" onclick="setPeriod('week',this)">Weekly</button>
+    <button class="pbtn"        onclick="setPeriod('month',this)">Monthly</button>
+    <button class="pbtn"        onclick="setPeriod('review',this)">Review</button>
+  </div>
+
+  <div id="sum-week">
+    <div class="chips" id="week-tabs"></div>
+    <div class="stat-grid" id="week-stats"></div>
+    <div class="chart-wrap">
+      <div class="chart-title">Study vs Screen vs Sleep — by day</div>
+      <div id="corr-chart"></div>
+      <div class="corr-legend">
+        <div class="corr-leg"><div class="corr-dot" style="background:#2563EB"></div>Study</div>
+        <div class="corr-leg"><div class="corr-dot" style="background:#C2570A"></div>Screen</div>
+        <div class="corr-leg"><div class="corr-dot" style="background:#7C3AED"></div>Sleep</div>
+      </div>
+    </div>
+    <div class="chart-wrap"><div class="chart-title">Study hours — by subject</div><div id="week-skill-bars"></div></div>
+  </div>
+
+  <div id="sum-month" style="display:none">
+    <div class="chips" id="month-tabs"></div>
+    <div class="stat-grid" id="month-stats"></div>
+    <div class="chart-wrap"><div class="chart-title">Study hours — by subject</div><div id="month-skill-bars"></div></div>
+    <div class="chart-wrap"><div class="chart-title">Screen time — by platform</div><div id="month-screen-bars"></div></div>
+    <div class="chart-wrap"><div class="chart-title">Sleep — average by week</div><div id="month-sleep-bars"></div></div>
+    <div class="chart-wrap"><div class="chart-title">Mood & Energy — by week</div><div id="month-mood-bars"></div></div>
+  </div>
+
+  <div id="sum-review" style="display:none">
+    <!-- AI reflection + heatmap + weekly review -->
+    <div class="ai-card" id="ai-reflection-card">
+      <div class="ai-card-header">
+        <span class="ai-card-icon">🤖</span>
+        <span class="ai-card-title">AI Weekly Reflection</span>
+      </div>
+      <div class="ai-card-body" id="ai-reflection-text">Tap below to generate your reflection.</div>
+      <button class="ai-refresh" onclick="generateReflection()">✨ Generate reflection</button>
+    </div>
+
+    <div class="heatmap-wrap">
+      <div class="chart-title">Daily score — last 3 months</div>
+      <div id="heatmap-container"></div>
+      <div class="heatmap-legend">
+        <span class="heatmap-legend-lbl">Less</span>
+        <div class="hm-leg" style="background:var(--bg);border:1px solid var(--border)"></div>
+        <div class="hm-leg" style="background:#BBF7D0"></div>
+        <div class="hm-leg" style="background:#86EFAC"></div>
+        <div class="hm-leg" style="background:#4ADE80"></div>
+        <div class="hm-leg" style="background:#22C55E"></div>
+        <div class="hm-leg" style="background:#16A34A"></div>
+        <span class="heatmap-legend-lbl">More</span>
+      </div>
+    </div>
+
+    <div class="sl" style="margin-bottom:10px">This week's review</div>
+    <div id="week-review-content"></div>
+
+    <div class="sl" style="margin-top:6px;margin-bottom:10px">Habit consistency</div>
+    <div class="consist-strip" id="consist-strip"></div>
+  </div>
+</div>
+
+<!-- GOALS -->
+<div id="pg-goals" class="page">
+  <div class="sl" style="margin-bottom:14px">Daily targets — tap Edit to change</div>
+  <div id="goals-list"></div>
+  <div style="margin-top:8px;font-size:12px;color:var(--muted);line-height:1.6">
+    Goals show as progress bars on your Home dashboard.<br>
+    🟢 On track &nbsp;·&nbsp; 🟡 Close &nbsp;·&nbsp; 🔴 Not met
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="modal" onclick="closeModal(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div style="position:relative">
+      <div class="sheet-title" id="modal-title"></div>
+      <button class="sheet-x" onclick="closeModalDirect()">×</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORE_LOGS  = 'rl_logs_v4';
+const STORE_GOALS = 'rl_goals_v4';
+const MOOD_EMOJI  = ['','😞','😕','😐','🙂','😄'];
+const ENERGY_EMOJI= ['','💀','😩','😐','💪','⚡'];
+
+const DEFAULT_GOALS = {
+  study:  { label:'Study',       icon:'📚', unit:'hrs', val:4, color:'#2563EB', dir:'min' },
+  sleep:  { label:'Sleep',       icon:'😴', unit:'hrs', val:7, color:'#7C3AED', dir:'min' },
+  screen: { label:'Screen time', icon:'📱', unit:'hrs', val:2, color:'#C2570A', dir:'max' }
+};
+
+function load(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }
+function save() { localStorage.setItem(STORE_LOGS, JSON.stringify(logs)); localStorage.setItem(STORE_GOALS, JSON.stringify(goals)); }
+
+let logs    = load(STORE_LOGS)  || [];
+let goals   = load(STORE_GOALS) || JSON.parse(JSON.stringify(DEFAULT_GOALS));
+let logType = 'sleep', histFilter = 'all', sumPeriod = 'week', sumWeek = null, sumMonth = null;
+let noteFilter = 'all', selectedTags = [];
+
+// ── UTILS ──────────────────────────────────────────────────────────────────
+function today() { return new Date().toISOString().split('T')[0]; }
+function mKey(d) { return (d||'').slice(0,7); }
+function wKey(d) {
+  if (!d) return null;
+  const dt=new Date(d), dow=dt.getDay();
+  const m=new Date(dt); m.setDate(dt.getDate()-((dow+6)%7));
+  return m.toISOString().split('T')[0];
+}
+function mLabel(k) { const [y,m]=k.split('-'); return new Date(y,m-1,1).toLocaleString('en-IN',{month:'short',year:'numeric'}); }
+function wLabel(k) {
+  const d=new Date(k),e=new Date(d); e.setDate(d.getDate()+6);
+  return d.toLocaleString('en-IN',{day:'numeric',month:'short'})+' – '+e.toLocaleString('en-IN',{day:'numeric',month:'short'});
+}
+function fmtH(h) {
+  if (!h && h!==0) return '—';
+  if (h===0) return '0h';
+  const hh=Math.floor(h), mm=Math.round((h-hh)*60);
+  return mm?`${hh}h ${mm}m`:`${hh}h`;
+}
+function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function toast(msg,err=false) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast show'+(err?' err':'');
+  setTimeout(()=>t.className='toast',2400);
+}
+function fmtDate(d) {
+  return new Date(d).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+}
+
+// ── DAILY SCORE ────────────────────────────────────────────────────────────
+function calcDayScore(date) {
+  const dl = logs.filter(l => l.date === date);
+  let score = 0, breakdown = {};
+
+  // Sleep: max 30pts (7h = full)
+  const sleepLog = dl.find(l => l.type === 'sleep');
+  const sleepHrs = sleepLog ? sleepLog.sleepHrs : 0;
+  const sleepPts = Math.min(Math.round((sleepHrs / (goals.sleep?.val || 7)) * 30), 30);
+  breakdown.sleep = { pts: sleepPts, max: 30 };
+  score += sleepPts;
+
+  // Study: max 40pts
+  const studyHrs = dl.filter(l => l.type === 'skill').reduce((s,l) => s + l.hrs, 0);
+  const focusBonus = dl.filter(l => l.type === 'skill').reduce((s,l) => s + (l.focus || 2), 0);
+  const studyBase = Math.min((studyHrs / (goals.study?.val || 4)) * 35, 35);
+  const focusMult = dl.filter(l=>l.type==='skill').length > 0 ? focusBonus / (dl.filter(l=>l.type==='skill').length * 3) : 1;
+  const studyPts = Math.min(Math.round(studyBase * focusMult + (studyHrs > 0 ? 5 : 0)), 40);
+  breakdown.study = { pts: studyPts, max: 40 };
+  score += studyPts;
+
+  // Screen control: max 30pts (0h = 30, ≥limit = 0)
+  const screenHrs = dl.filter(l => l.type === 'screen').reduce((s,l) => s + l.hrs, 0);
+  const screenLimit = goals.screen?.val || 2;
+  const screenPts = screenHrs === 0 && studyHrs === 0 ? 0 : Math.max(0, Math.round((1 - screenHrs / screenLimit) * 30));
+  breakdown.screen = { pts: Math.min(screenPts, 30), max: 30 };
+  score += breakdown.screen.pts;
+
+  const total = Math.min(score, 100);
+  return { total, breakdown };
+}
+
+function renderScore() {
+  const { total, breakdown } = calcDayScore(today());
+  const scoreEl = document.getElementById('score-num');
+  const arcEl = document.getElementById('score-arc');
+  const breakdownEl = document.getElementById('score-breakdown');
+
+  if (total === 0 && Object.values(breakdown).every(b => b.pts === 0)) {
+    scoreEl.textContent = '—';
+    arcEl.style.strokeDashoffset = '188.5';
+    breakdownEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">Log sleep, study & screen<br>to get your daily score</div>';
+    return;
+  }
+
+  scoreEl.textContent = total;
+  const color = total >= 80 ? '#16A34A' : total >= 55 ? '#EAB308' : '#EF4444';
+  arcEl.style.stroke = color;
+  arcEl.style.strokeDashoffset = 188.5 - (total / 100) * 188.5;
+
+  const items = [
+    { key: 'sleep', label: '😴 Sleep', color: '#7C3AED' },
+    { key: 'study', label: '📚 Study', color: '#2563EB' },
+    { key: 'screen', label: '📱 Screen', color: '#C2570A' },
+  ];
+  breakdownEl.innerHTML = items.map(it => {
+    const b = breakdown[it.key];
+    const pct = Math.round((b.pts / b.max) * 100);
+    return `<div class="score-row">
+      <div class="score-key">${it.label}</div>
+      <div class="score-bar"><div class="score-fill" style="width:${pct}%;background:${it.color}"></div></div>
+      <div class="score-pts">${b.pts}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── NAV ────────────────────────────────────────────────────────────────────
+function go(id,el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('pg-'+id).classList.add('active');
+  el.classList.add('active');
+  render();
+}
+
+// ── LOG TYPE ───────────────────────────────────────────────────────────────
+const FORMS=['sleep','skill','screen','note'];
+function setType(t) {
+  logType=t;
+  FORMS.forEach(f=>{
+    document.getElementById('btn-'+f).className='type-btn '+f+(f===t?' active':'');
+    document.getElementById('form-'+f).style.display=f===t?'':'none';
+  });
+}
+
+// ── TAGS ──────────────────────────────────────────────────────────────────
+function toggleTag(el, tag) {
+  el.classList.toggle('active');
+  if (selectedTags.includes(tag)) {
+    selectedTags = selectedTags.filter(t => t !== tag);
+  } else {
+    selectedTags.push(tag);
+  }
+}
+
+// ── ADD LOG ────────────────────────────────────────────────────────────────
+function addLog(type, modal=false) {
+  const p=modal?'q':'';
+  let e={id:uid(),type,date:today(),ts:Date.now()};
+  if (type==='sleep') {
+    const bed=document.getElementById(p+'sl-bed').value;
+    const wake=document.getElementById(p+'sl-wake').value;
+    const d=document.getElementById(p+'sl-date').value;
+    const note=(document.getElementById(p+'sl-note')||{}).value||'';
+    if(!bed||!wake){toast('Enter bed & wake time',true);return;}
+    if(!d){toast('Pick a date',true);return;}
+    const tm=s=>{const[h,m]=s.split(':').map(Number);return h*60+m;};
+    let diff=tm(wake)-tm(bed); if(diff<0)diff+=1440;
+    e={...e,date:d,bed,wake,sleepHrs:Math.round(diff/60*100)/100,note:note.trim()};
+  } else if (type==='skill') {
+    const hrs=parseFloat(document.getElementById(p+'sk-hrs').value);
+    const d=document.getElementById(p+'sk-date').value;
+    const name=document.getElementById(p+'sk-name').value;
+    const note=(document.getElementById(p+'sk-note')||{}).value||'';
+    const focus=parseInt((document.getElementById(p+'sk-focus')||{value:'2'}).value)||2;
+    if(!hrs||hrs<=0){toast('Enter duration',true);return;}
+    if(!d){toast('Pick a date',true);return;}
+    e={...e,date:d,name,hrs,note:note.trim(),focus};
+  } else if (type==='screen') {
+    const hrs=parseFloat(document.getElementById(p+'sc-hrs').value);
+    const d=document.getElementById(p+'sc-date').value;
+    const platform=document.getElementById(p+'sc-platform').value;
+    if(!hrs||hrs<=0){toast('Enter hours',true);return;}
+    if(!d){toast('Pick a date',true);return;}
+    e={...e,date:d,hrs,platform};
+  } else if (type==='note') {
+    const d=document.getElementById(p+'nt-date').value;
+    const text=document.getElementById(p+'nt-text').value.trim();
+    const mood=parseInt(document.getElementById(p+'nt-mood').value);
+    const energy=parseInt((document.getElementById(p+'nt-energy')||{value:'3'}).value)||3;
+    const stress=parseInt((document.getElementById(p+'nt-stress')||{value:'1'}).value)||1;
+    const tags=modal?[]:selectedTags.slice();
+    if(!text){toast('Write something',true);return;}
+    if(!d){toast('Pick a date',true);return;}
+    e={...e,date:d,text,mood,energy,stress,tags};
+  }
+  logs.unshift(e); save();
+  if(modal)closeModalDirect(); else clearForm(type);
+  toast('Logged ✓'); render();
+}
+
+function clearForm(t) {
+  if(t==='sleep'){document.getElementById('sl-bed').value='';document.getElementById('sl-wake').value='';document.getElementById('sl-note').value='';}
+  if(t==='skill'){document.getElementById('sk-hrs').value='';document.getElementById('sk-note').value='';}
+  if(t==='screen'){document.getElementById('sc-hrs').value='';}
+  if(t==='note'){
+    document.getElementById('nt-text').value='';
+    document.getElementById('nt-mood').value='3';
+    document.getElementById('nt-energy').value='3';
+    document.getElementById('nt-stress').value='1';
+    selectedTags=[];
+    document.querySelectorAll('#note-tag-picker .note-tag').forEach(el=>el.classList.remove('active'));
+  }
+}
+
+function deleteLog(id){logs=logs.filter(l=>l.id!==id);save();toast('Deleted');render();}
+
+// ── QUICK MODAL ────────────────────────────────────────────────────────────
+const QF={
+  sleep:()=>`<div class="hint">Bed time first, wake time second — hours calculated automatically.</div>
+    <div class="fg2" style="margin-bottom:8px">
+      <div class="field"><label>🌙 Bed Time</label><input type="time" id="qsl-bed" class="tbig"></div>
+      <div class="field"><label>☀️ Wake Up</label><input type="time" id="qsl-wake" class="tbig"></div>
+    </div>
+    <div class="field"><label>Date (woke up)</label><input type="date" id="qsl-date" value="${today()}"></div>
+    <div class="field"><input type="text" id="qsl-note" placeholder="Note (optional)"></div>
+    <button class="btn purple" onclick="addLog('sleep',true)">+ Log Sleep</button>`,
+  skill:()=>`<div class="field"><label>Subject</label>
+      <select id="qsk-name"><option>DSA / Coding</option><option>Spring Boot</option><option>Machine Learning</option><option>CyberTwin</option><option>Reading / Books</option><option>Project Work</option><option>Other</option></select>
+    </div>
+    <div class="fg2" style="margin-bottom:8px">
+      <div class="field"><label>Hours</label><input type="number" id="qsk-hrs" class="big" placeholder="1.5" step="0.25" min="0.25"></div>
+      <div class="field"><label>Date</label><input type="date" id="qsk-date" value="${today()}"></div>
+    </div>
+    <div class="field"><label>Focus quality</label>
+      <select id="qsk-focus"><option value="3">🔥 Deep focus</option><option value="2" selected>💡 Average</option><option value="1">😵 Distracted</option></select>
+    </div>
+    <div class="field"><textarea id="qsk-note" placeholder="What did you cover? (optional)"></textarea></div>
+    <button class="btn blue" onclick="addLog('skill',true)">+ Log Study</button>`,
+  screen:()=>`<div class="field"><label>Screen Time (hrs)</label><input type="number" id="qsc-hrs" class="big" placeholder="2.5" step="0.25" min="0.25"></div>
+    <div class="fg2" style="margin-bottom:8px">
+      <div class="field"><label>Platform</label>
+        <select id="qsc-platform"><option>YouTube</option><option>Instagram</option><option>Twitter / X</option><option>Netflix / OTT</option><option>Games</option><option>Misc scrolling</option><option>Productive use</option></select>
+      </div>
+      <div class="field"><label>Date</label><input type="date" id="qsc-date" value="${today()}"></div>
+    </div>
+    <button class="btn orange" onclick="addLog('screen',true)">+ Log Screen</button>`,
+  note:()=>`<div class="field"><label>Date</label><input type="date" id="qnt-date" value="${today()}"></div>
+    <div class="field"><textarea id="qnt-text" placeholder="How was your day? Wins, struggles, reflections…" style="height:100px"></textarea></div>
+    <div class="fg2">
+      <div class="field"><label>Mood</label>
+        <select id="qnt-mood"><option value="5">😄 Great</option><option value="4">🙂 Good</option><option value="3" selected>😐 Okay</option><option value="2">😕 Meh</option><option value="1">😞 Bad</option></select>
+      </div>
+      <div class="field"><label>Energy</label>
+        <select id="qnt-energy"><option value="5">⚡ High</option><option value="4">💪 Good</option><option value="3" selected>😐 Average</option><option value="2">😩 Low</option><option value="1">💀 Depleted</option></select>
+      </div>
+    </div>
+    <button class="btn green" onclick="addLog('note',true)">+ Save Note</button>`
+};
+const QT={sleep:'Log Sleep 😴',skill:'Log Study 📚',screen:'Log Screen 📱',note:'Daily Note 📝'};
+
+function openQuick(t){
+  document.getElementById('modal-title').textContent=QT[t];
+  document.getElementById('modal-body').innerHTML=QF[t]();
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(e){if(e.target.id==='modal')closeModalDirect();}
+function closeModalDirect(){document.getElementById('modal').classList.remove('open');}
+
+// ── FILTER / PERIOD ────────────────────────────────────────────────────────
+function setNoteFilter(f,el){
+  noteFilter=f;
+  document.querySelectorAll('#notes-tag-filter .chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderNotes();
+}
+function setPeriod(p,el){
+  sumPeriod=p;
+  document.querySelectorAll('.pbtn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('sum-week').style.display=p==='week'?'':'none';
+  document.getElementById('sum-month').style.display=p==='month'?'':'none';
+  document.getElementById('sum-review').style.display=p==='review'?'':'none';
+  renderSummary();
+}
+
+// ── STREAKS ────────────────────────────────────────────────────────────────
+function calcStreak(type) {
+  const dates=type==='log'
+    ?[...new Set(logs.map(l=>l.date))].sort((a,b)=>b.localeCompare(a))
+    :[...new Set(logs.filter(l=>l.type===type).map(l=>l.date))].sort((a,b)=>b.localeCompare(a));
+  if(!dates.length)return 0;
+  let streak=0;
+  const ref=new Date(today());
+  for(let i=0;i<dates.length;i++){
+    const diff=Math.round((ref-new Date(dates[i]))/(864e5));
+    if(diff===i)streak++; else break;
+  }
+  return streak;
+}
+
+// ── GOAL BARS ──────────────────────────────────────────────────────────────
+function todayActuals() {
+  const d=today(), tl=logs.filter(l=>l.date===d);
+  return {
+    study:  tl.filter(l=>l.type==='skill').reduce((s,l)=>s+l.hrs,0),
+    sleep:  (tl.find(l=>l.type==='sleep')||{}).sleepHrs||0,
+    screen: tl.filter(l=>l.type==='screen').reduce((s,l)=>s+l.hrs,0)
+  };
+}
+
+function goalBarsHTML(actual) {
+  return Object.entries(goals).map(([key,g])=>{
+    const act=actual[key]||0, target=g.val;
+    let pct,cls;
+    if(g.dir==='min'){
+      pct=Math.min(act/target*100,100);
+      cls=pct>=100?'ok':pct>=60?'warn':'bad';
+    } else {
+      pct=Math.max(0,Math.min(100,(1-act/target)*100));
+      cls=pct>=60?'ok':pct>=20?'warn':'bad';
+    }
+    const lbl=g.dir==='min'?`${fmtH(act)} / ${g.val}${g.unit}`:`${fmtH(act)} used · limit ${g.val}${g.unit}`;
+    return `<div class="goal-item">
+      <div class="goal-hdr"><span class="goal-name">${g.icon} ${g.label}</span><span class="goal-nums">${lbl}</span></div>
+      <div class="goal-track"><div class="goal-fill ${cls}" style="width:${Math.max(pct,2)}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ── LOG HTML ───────────────────────────────────────────────────────────────
+function logHTML(l,del=true){
+  let desc='',meta='',val='',cls='';
+  if(l.type==='sleep'){desc=`😴 ${l.bed} → ${l.wake}`;meta=l.date+(l.note?` · ${l.note}`:'');val=fmtH(l.sleepHrs);cls='purple';}
+  else if(l.type==='skill'){
+    const focusLabel=['','😵','💡','🔥'][l.focus||2];
+    desc=`📚 ${l.name} ${focusLabel}`;
+    meta=l.date+(l.note?` · ${l.note.slice(0,45)}`:'');val=fmtH(l.hrs);cls='blue';
+  }
+  else if(l.type==='screen'){desc=`📱 ${l.platform}`;meta=l.date;val=fmtH(l.hrs);cls='orange';}
+  else if(l.type==='note'){desc=`${MOOD_EMOJI[l.mood]||'📝'} ${l.text.slice(0,55)}${l.text.length>55?'…':''}`;meta=l.date;val='note';cls='green';}
+  return `<div class="log-item">
+    <div class="log-dot ${l.type}"></div>
+    <div class="log-body"><div class="log-desc">${desc}</div><div class="log-meta">${meta}</div></div>
+    <div class="log-right"><div class="log-val ${cls}">${val}</div></div>
+    ${del?`<button class="log-del" onclick="deleteLog('${l.id}')">×</button>`:''}
+  </div>`;
+}
+
+function barRow(key,val,max,color,label){
+  return `<div class="bar-row">
+    <div class="bar-key" title="${key}">${key}</div>
+    <div class="bar-track"><div class="bar-fill" style="width:${val&&max?Math.max(Math.round(val/max*100),2):0}%;background:${color}"></div></div>
+    <div class="bar-val">${label}</div>
+  </div>`;
+}
+
+// ── HEATMAP ────────────────────────────────────────────────────────────────
+function renderHeatmap() {
+  const container = document.getElementById('heatmap-container');
+  if (!container) return;
+  const end = new Date();
+  const start = new Date(end);
+  start.setDate(start.getDate() - 84); // 12 weeks
+  // Align start to Monday
+  while (start.getDay() !== 1) start.setDate(start.getDate() - 1);
+
+  const cols = [];
+  const cur = new Date(start);
+  let monthLabels = {};
+
+  while (cur <= end) {
+    const weekCells = [];
+    for (let d = 0; d < 7; d++) {
+      const dateStr = cur.toISOString().split('T')[0];
+      const { total } = calcDayScore(dateStr);
+      const haslogs = logs.some(l => l.date === dateStr);
+      const scoreLevel = !haslogs ? 0 : total >= 90 ? 5 : total >= 75 ? 4 : total >= 60 ? 3 : total >= 40 ? 2 : 1;
+      const dayLabel = cur.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+      weekCells.push(`<div class="heatmap-cell" data-score="${scoreLevel}" title="${dayLabel}: ${haslogs ? total + ' pts' : 'No data'}"></div>`);
+      if (d === 0) {
+        const mKey = cur.toLocaleDateString('en-IN', { month: 'short' });
+        const colIdx = cols.length;
+        if (!Object.values(monthLabels).includes(mKey)) monthLabels[colIdx] = mKey;
+      }
+      cur.setDate(cur.getDate() + 1);
+    }
+    cols.push(weekCells.join(''));
+  }
+
+  const labelRow = cols.map((_, i) => {
+    const lbl = monthLabels[i] || '';
+    return `<div style="width:13px;flex-shrink:0;font-size:9px;color:var(--muted);font-weight:500;white-space:nowrap;overflow:visible">${lbl}</div>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div style="display:flex;gap:3px;margin-bottom:4px">${labelRow}</div>
+    <div class="heatmap-grid">${cols.map(c => `<div class="heatmap-col">${c}</div>`).join('')}</div>
+  `;
+}
+
+// ── WEEKLY REVIEW ──────────────────────────────────────────────────────────
+function renderWeekReview() {
+  const el = document.getElementById('week-review-content');
+  if (!el) return;
+  const wk = wKey(today());
+  if (!wk) { el.innerHTML = '<div class="empty">Log some data first</div>'; return; }
+
+  const wDays = [];
+  const wS = new Date(wk);
+  for (let i=0;i<7;i++) { const d=new Date(wS); d.setDate(wS.getDate()+i); wDays.push(d.toISOString().split('T')[0]); }
+  const wl = logs.filter(l => wDays.includes(l.date));
+
+  const studyTotal = wl.filter(l=>l.type==='skill').reduce((s,l)=>s+l.hrs,0);
+  const screenTotal = wl.filter(l=>l.type==='screen').reduce((s,l)=>s+l.hrs,0);
+  const sleepArr = wl.filter(l=>l.type==='sleep').map(l=>l.sleepHrs);
+  const avgSleep = sleepArr.length ? sleepArr.reduce((a,b)=>a+b,0)/sleepArr.length : null;
+  const moodArr = wl.filter(l=>l.type==='note').map(l=>l.mood);
+  const avgMood = moodArr.length ? moodArr.reduce((a,b)=>a+b,0)/moodArr.length : null;
+  const daysLogged = new Set(wl.map(l=>l.date)).size;
+
+  // Best day by score
+  const dayScores = wDays.map(d => ({ d, s: calcDayScore(d).total, hasData: logs.some(l=>l.date===d) })).filter(x=>x.hasData);
+  const bestDay = dayScores.length ? dayScores.reduce((a,b)=>a.s>b.s?a:b) : null;
+  const bestSubj = (() => { const sm={}; wl.filter(l=>l.type==='skill').forEach(l=>{sm[l.name]=(sm[l.name]||0)+l.hrs;}); const e=Object.entries(sm).sort((a,b)=>b[1]-a[1]); return e.length?e[0]:null; })();
+
+  const consistPct = Math.round((daysLogged / 7) * 100);
+
+  el.innerHTML = `
+    <div class="review-card">
+      <div class="review-card-title">This week at a glance</div>
+      ${bestDay ? `<div class="review-item"><span class="review-item-icon">🏆</span><span class="review-item-text">Best day</span><span class="review-item-val">${fmtDate(bestDay.d)} (${bestDay.s} pts)</span></div>` : ''}
+      ${bestSubj ? `<div class="review-item"><span class="review-item-icon">📚</span><span class="review-item-text">Top subject</span><span class="review-item-val">${bestSubj[0]}</span></div>` : ''}
+      <div class="review-item"><span class="review-item-icon">📅</span><span class="review-item-text">Days logged</span><span class="review-item-val">${daysLogged}/7 (${consistPct}%)</span></div>
+      ${avgSleep ? `<div class="review-item"><span class="review-item-icon">😴</span><span class="review-item-text">Avg sleep</span><span class="review-item-val">${fmtH(Math.round(avgSleep*100)/100)}</span></div>` : ''}
+      ${avgMood ? `<div class="review-item"><span class="review-item-icon">${MOOD_EMOJI[Math.round(avgMood)]}</span><span class="review-item-text">Avg mood</span><span class="review-item-val">${avgMood.toFixed(1)}/5</span></div>` : ''}
+      <div class="review-item"><span class="review-item-icon">📱</span><span class="review-item-text">Screen time</span><span class="review-item-val">${fmtH(screenTotal)}</span></div>
+    </div>`;
+
+  // Consistency strip
+  const consistEl = document.getElementById('consist-strip');
+  if (consistEl) {
+    const studyDays = new Set(wl.filter(l=>l.type==='skill').map(l=>l.date)).size;
+    const sleepDays = new Set(wl.filter(l=>l.type==='sleep').map(l=>l.date)).size;
+    const noteDays  = new Set(wl.filter(l=>l.type==='note').map(l=>l.date)).size;
+    consistEl.innerHTML = [
+      { label: '📚 Study', days: studyDays },
+      { label: '😴 Sleep', days: sleepDays },
+      { label: '📝 Notes', days: noteDays },
+    ].map(({label, days}) => `
+      <div class="consist-card">
+        <div class="consist-val" style="color:${days>=5?'var(--green)':days>=3?'var(--orange)':'var(--red)'}">${Math.round(days/7*100)}%</div>
+        <div class="consist-lbl">${label}</div>
+      </div>`).join('');
+  }
+}
+
+// ── AI REFLECTION ─────────────────────────────────────────────────────────
+async function generateReflection() {
+  const textEl = document.getElementById('ai-reflection-text');
+  textEl.textContent = 'Analyzing your week…';
+  textEl.className = 'ai-card-body loading';
+
+  const wk = wKey(today());
+  const wDays = [];
+  const wS = new Date(wk);
+  for (let i=0;i<7;i++) { const d=new Date(wS); d.setDate(wS.getDate()+i); wDays.push(d.toISOString().split('T')[0]); }
+  const wl = logs.filter(l => wDays.includes(l.date));
+
+  const studyTotal = wl.filter(l=>l.type==='skill').reduce((s,l)=>s+l.hrs,0);
+  const screenTotal = wl.filter(l=>l.type==='screen').reduce((s,l)=>s+l.hrs,0);
+  const sleepArr = wl.filter(l=>l.type==='sleep').map(l=>l.sleepHrs);
+  const avgSleep = sleepArr.length ? (sleepArr.reduce((a,b)=>a+b,0)/sleepArr.length).toFixed(1) : null;
+  const noteTexts = wl.filter(l=>l.type==='note').map(l=>l.text).join(' | ');
+  const moods = wl.filter(l=>l.type==='note').map(l=>l.mood);
+  const avgMood = moods.length ? (moods.reduce((a,b)=>a+b,0)/moods.length).toFixed(1) : null;
+  const subjects = {};
+  wl.filter(l=>l.type==='skill').forEach(l=>{subjects[l.name]=(subjects[l.name]||0)+l.hrs;});
+  const daysLogged = new Set(wl.map(l=>l.date)).size;
+  const avgScore = (() => { const sc=wDays.filter(d=>logs.some(l=>l.date===d)).map(d=>calcDayScore(d).total); return sc.length?(sc.reduce((a,b)=>a+b,0)/sc.length).toFixed(0):null; })();
+
+  const prompt = `You are a personal life coach reflecting on someone's week. Be concise, warm, and specific. Write 3-4 sentences max.
+
+Data:
+- Study: ${fmtH(studyTotal)} total, subjects: ${JSON.stringify(subjects)}
+- Screen time: ${fmtH(screenTotal)}
+- Avg sleep: ${avgSleep ? avgSleep+'h' : 'not tracked'}
+- Avg mood: ${avgMood ? avgMood+'/5' : 'not tracked'}
+- Days logged: ${daysLogged}/7
+- Avg daily score: ${avgScore || 'N/A'}/100
+- Notes excerpts: ${noteTexts ? noteTexts.slice(0,300) : 'none'}
+
+Write a brief, honest reflection: what went well, what to improve, one actionable nudge for next week. Use "you" not "the user". Be specific to the data. No bullet points — flowing sentences only.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || 'Could not generate reflection.';
+    textEl.textContent = reply;
+    textEl.className = 'ai-card-body';
+  } catch(err) {
+    textEl.textContent = 'Could not connect. Check your internet and try again.';
+    textEl.className = 'ai-card-body';
+  }
+}
+
+// ── NOTES PAGE ─────────────────────────────────────────────────────────────
+function renderNotes() {
+  const search = (document.getElementById('notes-search')?.value || '').toLowerCase();
+  let noteLogs = logs.filter(l => l.type === 'note');
+  if (noteFilter !== 'all') {
+    noteLogs = noteLogs.filter(l => (l.tags||[]).includes(noteFilter));
+  }
+  if (search) {
+    noteLogs = noteLogs.filter(l =>
+      l.text.toLowerCase().includes(search) ||
+      (l.tags||[]).some(t => t.toLowerCase().includes(search))
+    );
+  }
+  const el = document.getElementById('notes-list');
+  if (!noteLogs.length) {
+    el.innerHTML = '<div class="empty">No notes found</div>'; return;
+  }
+  el.innerHTML = noteLogs.map(l => `
+    <div class="note-full">
+      <div class="note-full-header">
+        <div>
+          <div style="font-size:13px;font-weight:500">${fmtDate(l.date)}</div>
+          <div class="note-full-date" style="margin-top:1px">${l.date}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="note-full-mood">${MOOD_EMOJI[l.mood]||'😐'}</span>
+          <button class="log-del" onclick="deleteLog('${l.id}')">×</button>
+        </div>
+      </div>
+      <div class="note-full-text">${l.text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+      ${(l.tags||[]).length ? `<div class="note-full-meta">${l.tags.map(t=>`<span class="note-full-tag">${t}</span>`).join('')}</div>` : ''}
+      ${(l.energy||l.stress) ? `<div class="note-full-context">
+        ${l.energy ? `<div class="ctx-item">Energy <span>${ENERGY_EMOJI[l.energy]} ${l.energy}/5</span></div>` : ''}
+        ${l.stress ? `<div class="ctx-item">Stress <span>${l.stress}/5</span></div>` : ''}
+      </div>` : ''}
+    </div>`).join('');
+}
+
+// ── RENDER ─────────────────────────────────────────────────────────────────
+function render(){renderHome();renderSummary();renderGoalsPage();renderNotes();}
+
+function renderHome(){
+  const now=new Date(), hr=now.getHours();
+  const greet=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
+  document.getElementById('home-date').textContent=now.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('home-greet').textContent=greet+', Rishabh 👋';
+
+  const actual=todayActuals();
+  document.getElementById('home-goals').innerHTML=goalBarsHTML(actual);
+
+  const ls=calcStreak('log'),ss=calcStreak('skill'),sl=calcStreak('sleep');
+  document.getElementById('st-log').textContent=ls;
+  document.getElementById('st-study').textContent=ss;
+  document.getElementById('st-sleep').textContent=sl;
+  document.getElementById('streak-badge').textContent=ls>1?'🔥 '+ls+'d streak':'';
+
+  const d=today(), todayLogs=logs.filter(l=>l.date===d);
+  document.getElementById('home-today').innerHTML=todayLogs.length
+    ?todayLogs.map(l=>logHTML(l,false)).join('')
+    :'<div class="empty">Nothing logged today yet — use Quick Add above</div>';
+
+  renderScore();
+}
+
+function renderSummary(){
+  if(sumPeriod==='week') renderWeek();
+  else if(sumPeriod==='month') renderMonth();
+  else if(sumPeriod==='review') { renderHeatmap(); renderWeekReview(); }
+}
+
+function renderWeek(){
+  const weeks=[...new Set(logs.map(l=>wKey(l.date)).filter(Boolean))].sort((a,b)=>b.localeCompare(a));
+  if(!weeks.length){
+    document.getElementById('week-tabs').innerHTML='';
+    document.getElementById('week-stats').innerHTML='<div class="empty" style="grid-column:1/-1">Log some data to see weekly summary</div>';
+    document.getElementById('corr-chart').innerHTML='';
+    document.getElementById('week-skill-bars').innerHTML='';
+    return;
+  }
+  if(!sumWeek||!weeks.includes(sumWeek))sumWeek=weeks[0];
+  document.getElementById('week-tabs').innerHTML=weeks.map(w=>
+    `<button class="chip ${w===sumWeek?'active':''}" onclick="setSW('${w}',this)">${wLabel(w)}</button>`
+  ).join('');
+
+  const wDays=[];
+  const wS=new Date(sumWeek);
+  for(let i=0;i<7;i++){const d=new Date(wS);d.setDate(wS.getDate()+i);wDays.push(d.toISOString().split('T')[0]);}
+  const wl=logs.filter(l=>wDays.includes(l.date));
+
+  const totStudy =wl.filter(l=>l.type==='skill').reduce((s,l)=>s+l.hrs,0);
+  const totScreen=wl.filter(l=>l.type==='screen').reduce((s,l)=>s+l.hrs,0);
+  const slArr    =wl.filter(l=>l.type==='sleep').map(l=>l.sleepHrs);
+  const avgSleep =slArr.length?slArr.reduce((a,b)=>a+b,0)/slArr.length:null;
+  const mdArr    =wl.filter(l=>l.type==='note').map(l=>l.mood);
+  const avgMood  =mdArr.length?mdArr.reduce((a,b)=>a+b,0)/mdArr.length:null;
+
+  document.getElementById('week-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-lbl">📚 Total Study</div><div class="stat-val blue">${fmtH(totStudy)}</div></div>
+    <div class="stat-card"><div class="stat-lbl">📱 Screen Time</div><div class="stat-val orange">${fmtH(totScreen)}</div></div>
+    <div class="stat-card"><div class="stat-lbl">😴 Avg Sleep</div><div class="stat-val purple">${avgSleep!==null?fmtH(Math.round(avgSleep*100)/100):'—'}</div></div>
+    <div class="stat-card"><div class="stat-lbl">🙂 Avg Mood</div><div class="stat-val">${avgMood!==null?MOOD_EMOJI[Math.round(avgMood)]+' '+avgMood.toFixed(1)+'/5':'—'}</div></div>
+  `;
+
+  const DL=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const studyD =wDays.map(d=>wl.filter(l=>l.date===d&&l.type==='skill').reduce((s,l)=>s+l.hrs,0));
+  const screenD=wDays.map(d=>wl.filter(l=>l.date===d&&l.type==='screen').reduce((s,l)=>s+l.hrs,0));
+  const sleepD =wDays.map(d=>{const sl=wl.find(l=>l.date===d&&l.type==='sleep');return sl?sl.sleepHrs:0;});
+  const maxV   =Math.max(...studyD,...screenD,...sleepD,1);
+
+  document.getElementById('corr-chart').innerHTML=wDays.map((d,i)=>`
+    <div class="corr-row">
+      <div class="corr-day">${DL[i]}</div>
+      <div style="flex:1;display:flex;gap:2px;align-items:center">
+        <div class="corr-seg" style="width:${Math.round(studyD[i]/maxV*100)}%;background:#2563EB;opacity:0.85"></div>
+        <div class="corr-seg" style="width:${Math.round(screenD[i]/maxV*100)}%;background:#C2570A;opacity:0.85"></div>
+        <div class="corr-seg" style="width:${Math.round(sleepD[i]/maxV*100)}%;background:#7C3AED;opacity:0.85"></div>
+      </div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);width:36px;text-align:right;flex-shrink:0">${studyD[i]>0?fmtH(studyD[i]):''}</div>
+    </div>`).join('');
+
+  const sm={};
+  wl.filter(l=>l.type==='skill').forEach(l=>{sm[l.name]=(sm[l.name]||0)+l.hrs;});
+  const mxSk=Math.max(...Object.values(sm),1);
+  document.getElementById('week-skill-bars').innerHTML=Object.entries(sm).sort((a,b)=>b[1]-a[1])
+    .map(([s,v])=>barRow(s,v,mxSk,'#2563EB',fmtH(v))).join('')||'<div class="empty" style="padding:8px 0">No study logged this week</div>';
+}
+
+function setSW(w,el){
+  sumWeek=w;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderWeek();
+}
+
+function renderMonth(){
+  const months=[...new Set(logs.map(l=>mKey(l.date)).filter(Boolean))].sort((a,b)=>b.localeCompare(a));
+  if(!months.length){
+    ['month-tabs','month-stats','month-skill-bars','month-screen-bars','month-sleep-bars','month-mood-bars'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el)el.innerHTML=id==='month-stats'?'<div class="empty" style="grid-column:1/-1">Log some data first</div>':'';
+    });
+    return;
+  }
+  if(!sumMonth||!months.includes(sumMonth))sumMonth=months[0];
+  document.getElementById('month-tabs').innerHTML=months.map(m=>
+    `<button class="chip ${m===sumMonth?'active':''}" onclick="setSMo('${m}',this)">${mLabel(m)}</button>`
+  ).join('');
+
+  const ml=logs.filter(l=>mKey(l.date)===sumMonth);
+  const totStudy =ml.filter(l=>l.type==='skill').reduce((s,l)=>s+l.hrs,0);
+  const totScreen=ml.filter(l=>l.type==='screen').reduce((s,l)=>s+l.hrs,0);
+  const slArr    =ml.filter(l=>l.type==='sleep').map(l=>l.sleepHrs);
+  const avgSleep =slArr.length?slArr.reduce((a,b)=>a+b,0)/slArr.length:null;
+  const mdArr    =ml.filter(l=>l.type==='note').map(l=>l.mood);
+  const avgMood  =mdArr.length?mdArr.reduce((a,b)=>a+b,0)/mdArr.length:null;
+  const enArr    =ml.filter(l=>l.type==='note'&&l.energy).map(l=>l.energy);
+  const avgEnergy=enArr.length?enArr.reduce((a,b)=>a+b,0)/enArr.length:null;
+  const daysLog  =new Set(ml.map(l=>l.date)).size;
+
+  document.getElementById('month-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-lbl">📚 Total Study</div><div class="stat-val blue">${fmtH(totStudy)}</div></div>
+    <div class="stat-card"><div class="stat-lbl">📱 Screen Time</div><div class="stat-val orange">${fmtH(totScreen)}</div></div>
+    <div class="stat-card"><div class="stat-lbl">😴 Avg Sleep</div><div class="stat-val purple">${avgSleep!==null?fmtH(Math.round(avgSleep*100)/100):'—'}</div></div>
+    <div class="stat-card"><div class="stat-lbl">📅 Days Logged</div><div class="stat-val">${daysLog}</div></div>
+    <div class="stat-card"><div class="stat-lbl">🙂 Avg Mood</div><div class="stat-val">${avgMood!==null?MOOD_EMOJI[Math.round(avgMood)]+' '+avgMood.toFixed(1)+'/5':'—'}</div></div>
+    <div class="stat-card"><div class="stat-lbl">⚡ Avg Energy</div><div class="stat-val teal">${avgEnergy!==null?ENERGY_EMOJI[Math.round(avgEnergy)]+' '+avgEnergy.toFixed(1)+'/5':'—'}</div></div>
+  `;
+
+  const sm={};
+  ml.filter(l=>l.type==='skill').forEach(l=>{sm[l.name]=(sm[l.name]||0)+l.hrs;});
+  const mxSk=Math.max(...Object.values(sm),1);
+  document.getElementById('month-skill-bars').innerHTML=Object.entries(sm).sort((a,b)=>b[1]-a[1])
+    .map(([s,v])=>barRow(s,v,mxSk,'#2563EB',fmtH(v))).join('')||'<div class="empty" style="padding:8px 0">No study logged</div>';
+
+  const pm={};
+  ml.filter(l=>l.type==='screen').forEach(l=>{pm[l.platform]=(pm[l.platform]||0)+l.hrs;});
+  const mxPl=Math.max(...Object.values(pm),1);
+  const PC={'YouTube':'#FF0000','Instagram':'#E1306C','Twitter / X':'#1DA1F2','Netflix / OTT':'#E50914','Games':'#00B4D8','Misc scrolling':'#C2570A','Productive use':'#1D7A52'};
+  document.getElementById('month-screen-bars').innerHTML=Object.entries(pm).sort((a,b)=>b[1]-a[1])
+    .map(([p,v])=>barRow(p,v,mxPl,PC[p]||'#9A9890',fmtH(v))).join('')||'<div class="empty" style="padding:8px 0">No screen time logged</div>';
+
+  const weeks=[...new Set(ml.filter(l=>l.type==='sleep').map(l=>wKey(l.date)).filter(Boolean))].sort();
+  const slByW=weeks.map(w=>{const ws=ml.filter(l=>l.type==='sleep'&&wKey(l.date)===w);return{w,avg:ws.reduce((s,l)=>s+l.sleepHrs,0)/ws.length};});
+  const mxSl=Math.max(...slByW.map(x=>x.avg),8);
+  document.getElementById('month-sleep-bars').innerHTML=slByW.length
+    ?slByW.map(({w,avg})=>barRow('Wk '+w.slice(8),avg,mxSl,'#7C3AED',fmtH(Math.round(avg*100)/100))).join('')
+    :'<div class="empty" style="padding:8px 0">No sleep logged</div>';
+
+  const wksNote=[...new Set(ml.filter(l=>l.type==='note').map(l=>wKey(l.date)).filter(Boolean))].sort();
+  const mdByW=wksNote.map(w=>{const wn=ml.filter(l=>l.type==='note'&&wKey(l.date)===w);return{w,avgMood:wn.reduce((s,l)=>s+l.mood,0)/wn.length,avgEnergy:wn.filter(l=>l.energy).length?wn.filter(l=>l.energy).reduce((s,l)=>s+l.energy,0)/wn.filter(l=>l.energy).length:null};});
+  document.getElementById('month-mood-bars').innerHTML=mdByW.length
+    ?mdByW.map(({w,avgMood,avgEnergy})=>`
+      ${barRow('Wk '+w.slice(8)+' 🙂',avgMood,5,'#1D7A52',MOOD_EMOJI[Math.round(avgMood)]+' '+avgMood.toFixed(1))}
+      ${avgEnergy!==null?barRow('Wk '+w.slice(8)+' ⚡',avgEnergy,5,'#0D9488',ENERGY_EMOJI[Math.round(avgEnergy)]+' '+avgEnergy.toFixed(1)):''}
+    `).join('')
+    :'<div class="empty" style="padding:8px 0">No mood entries</div>';
+}
+
+function setSMo(m,el){
+  sumMonth=m;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderMonth();
+}
+
+function renderGoalsPage(){
+  document.getElementById('goals-list').innerHTML=Object.entries(goals).map(([key,g])=>`
+    <div class="goal-edit-item">
+      <div class="ge-icon">${g.icon}</div>
+      <div class="ge-body">
+        <div class="ge-name">${g.label}</div>
+        <div class="ge-val">${g.dir==='min'?'At least':'No more than'} ${g.val} ${g.unit} per day</div>
+      </div>
+      <button class="ge-btn" onclick="editGoal('${key}')">Edit</button>
+    </div>`).join('');
+}
+
+function editGoal(key){
+  const g=goals[key];
+  const val=prompt(`Set daily ${g.dir==='min'?'minimum':'maximum'} for "${g.label}" (in ${g.unit}):`,g.val);
+  if(val===null)return;
+  const n=parseFloat(val);
+  if(isNaN(n)||n<=0){toast('Enter a valid number',true);return;}
+  goals[key].val=n; save(); toast('Goal updated ✓'); render();
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+function init(){
+  const t=today();
+  ['sl-date','sk-date','sc-date','nt-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=t;});
+  document.getElementById('loader').classList.add('hidden');
+  render();
+}
+
+setType('sleep');
+init();
+</script>
+</body>
+</html>
